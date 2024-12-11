@@ -286,7 +286,7 @@ import (
 
 func main() {
 	// MongoDB connection
-	mongoClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://jerald:jeraldjero0602@cluster0.yzki9.mongodb.net/agent_details?retryWrites=true&w=majority&appName=Cluster0"))
+	mongoClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://app-user-dev:wUYvZfvoWHFIB2s0@xeniapp-cluster-dev.vswr9.mongodb.net/?retryWrites=true&w=majority&appName=xeniapp-cluster-dev"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -298,8 +298,8 @@ func main() {
 	}
 	defer mongoClient.Disconnect(ctx)
 
-	mongoCollectionAgents := mongoClient.Database("agent_details").Collection("agents")
-	mongoCollectionCompany := mongoClient.Database("agent_details").Collection("company")
+	mongoCollectionAgencies := mongoClient.Database("xeni-db-dev").Collection("agencies")
+	//mongoCollectionCompany := mongoClient.Database("agent_details").Collection("company")
 
 	// CockroachDB connection
 	connStr := "postgresql://root@localhost:26257/agent_details?sslmode=disable"
@@ -457,13 +457,13 @@ func main() {
 	}
 
 	// Migrate existing documents from company collection
-	migrateExistingDocuments(mongoCollectionCompany, "company", "_id")
+	migrateExistingDocuments(mongoCollectionAgencies, "agents", "_id")
 
 	// Migrate agents collection
-	go migrateDocument(mongoCollectionAgents, "agent", "email")
+	// go migrateDocument(mongoCollectionAgents, "agent", "email")
 
 	// Migrate company collection
-	go migrateDocument(mongoCollectionCompany, "company", "_id")
+	// go migrateDocument(mongoCollectionCompany, "company", "_id")
 
 	// Wait indefinitely
 	select {}

@@ -1,64 +1,68 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type MongoAgency struct {
-	_id                      string           `json:"_id"`
-	Owner                    string           `json:"owner,omitempty"`
-	Subdomain                string           `json:"subdomain" validate:"required,subdomain"`
-	AgencyName               string           `json:"agencyName" validate:"required"`
-	Domain                   string           `json:"domain,omitempty" validate:"domain"`
-	Logo                     string           `json:"logo,omitempty"`
-	LogoMobile               string           `json:"logoMobile,omitempty"`
-	Favicon                  string           `json:"favicon,omitempty"`
-	EINNumber                string           `json:"EINnumber,omitempty"`
-	CurrentWebsite           string           `json:"currentWebsite,omitempty"`
-	GovernmentID             string           `json:"governmentId,omitempty"`
-	PrimaryColor             string           `json:"primaryColor,omitempty" default:"#032C4C"`
-	SecondaryColor           string           `json:"secondaryColor,omitempty" default:"#38A896"`
-	PrimaryTextColor         string           `json:"primaryTextColor,omitempty" default:"#f2f2f2"`
-	SecondaryTextColor       string           `json:"secondaryTextColor,omitempty" default:"#f2f2f2"`
-	FooterColor              string           `json:"footerColor,omitempty" default:"#0e5191"`
-	FooterTextColor          string           `json:"footerTextColor,omitempty" default:"#ffffff"`
-	BackgroundImage          string           `json:"backgroundImage,omitempty"`
-	MobileBackgroundImage    string           `json:"mobileBackgroundImage,omitempty"`
-	BackgroundOverlay        float64          `json:"backgroundOverlay,omitempty" default:"0.0"`
-	Heading                  string           `json:"heading,omitempty"`
-	SubHeading               string           `json:"subHeading,omitempty"`
-	HeadingColor             string           `json:"headingColor,omitempty" default:"#fff"`
-	SubHeadingColor          string           `json:"subHeadingColor,omitempty" default:"#fff"`
-	SocialMedia              SocialMedia      `json:"social,omitempty"`
-	ContactPhoneNumber       string           `json:"contactPhoneNumber,omitempty"`
-	ContactEmailID           string           `json:"contactEmailId" validate:"email,required"`
-	PrivacyPolicy            string           `json:"privacyPolicy,omitempty"`
-	CookiesPolicy            string           `json:"cookiesPolicy,omitempty"`
-	Disclaimer               string           `json:"disclaimer,omitempty"`
-	WhitelistedSignupDomains []string         `json:"whitelistedSignupDomains,omitempty"`
-	AddressLine1             string           `json:"addressLine1,omitempty"`
-	AddressLine2             string           `json:"addressLine2,omitempty"`
-	State                    string           `json:"state,omitempty"`
-	City                     string           `json:"city,omitempty"`
-	OriginCountry            string           `json:"originCountry,omitempty"`
-	OriginCountryCode        string           `json:"originCountryCode,omitempty"`
-	Country                  string           `json:"country,omitempty"`
-	ZipCode                  string           `json:"zipCode,omitempty"`
-	IATA                     string           `json:"iata,omitempty"`
-	ARC                      string           `json:"arc,omitempty"`
-	Status                   string           `json:"status,omitempty" default:"Active"`
-	PaymentStatus            string           `json:"paymentStatus,omitempty" default:"Inactive"`
-	IsSubscribed             bool             `json:"isSubscribed,omitempty"`
-	TermsAcceptedAt          *time.Time       `json:"xeniTermsAndConditionsAcceptedAt,omitempty"`
-	BookingOptions           BookingOptions   `json:"bookingMenuItemOptions,omitempty"`
-	APIAccess                APIAccess        `json:"apiAccess,omitempty"`
-	Analytics                Analytics        `json:"analytics,omitempty"`
-	CurrentPaymentGateway    string           `json:"currentPaymentGateway,omitempty"`
-	ManageLocation           bool             `json:"manageLocation,omitempty"`
-	DefaultDealsLocation     LocationSettings `json:"defaultDealsLocation,omitempty"`
-	DefaultTargetLocation    LocationSettings `json:"defaultTargetLocation,omitempty"`
-	MetaData                 MetaData         `json:"metaData,omitempty"`
-	OTPEnabled               bool             `json:"otpSignupEnable,omitempty"`
-	HideHeaderForProposal    bool             `json:"hideHeaderforDealProposal,omitempty"`
-	ExtranetEnabled          bool             `json:"extranetEnabled,omitempty"`
+	_id                      primitive.ObjectID `json:"_id"`
+	Owner                    string             `json:"owner,omitempty"`
+	Subdomain                string             `json:"subdomain" validate:"required,subdomain"`
+	AgencyName               string             `json:"agencyName" validate:"required"`
+	Domain                   string             `json:"domain,omitempty" validate:"domain"`
+	Logo                     string             `json:"logo,omitempty"`
+	LogoMobile               string             `json:"logoMobile,omitempty"`
+	Favicon                  string             `json:"favicon,omitempty"`
+	EINNumber                string             `json:"EINnumber,omitempty"`
+	CurrentWebsite           string             `json:"currentWebsite,omitempty"`
+	GovernmentID             string             `json:"governmentId,omitempty"`
+	PrimaryColor             string             `json:"primaryColor,omitempty" default:"#032C4C"`
+	SecondaryColor           string             `json:"secondaryColor,omitempty" default:"#38A896"`
+	PrimaryTextColor         string             `json:"primaryTextColor,omitempty" default:"#f2f2f2"`
+	SecondaryTextColor       string             `json:"secondaryTextColor,omitempty" default:"#f2f2f2"`
+	FooterColor              string             `json:"footerColor,omitempty" default:"#0e5191"`
+	FooterTextColor          string             `json:"footerTextColor,omitempty" default:"#ffffff"`
+	BackgroundImage          string             `json:"backgroundImage,omitempty"`
+	MobileBackgroundImage    string             `json:"mobileBackgroundImage,omitempty"`
+	BackgroundOverlay        float64            `json:"backgroundOverlay,omitempty" default:"0.0"`
+	Heading                  string             `json:"heading,omitempty"`
+	SubHeading               string             `json:"subHeading,omitempty"`
+	HeadingColor             string             `json:"headingColor,omitempty" default:"#fff"`
+	SubHeadingColor          string             `json:"subHeadingColor,omitempty" default:"#fff"`
+	SocialMedia              SocialMedia        `json:"social,omitempty"`
+	ContactPhoneNumber       string             `json:"contactPhoneNumber,omitempty"`
+	ContactEmailID           string             `json:"contactEmailId" validate:"email,required"`
+	PrivacyPolicy            string             `json:"privacyPolicy,omitempty"`
+	CookiesPolicy            string             `json:"cookiesPolicy,omitempty"`
+	Disclaimer               string             `json:"disclaimer,omitempty"`
+	WhitelistedSignupDomains []string           `json:"whitelistedSignupDomains,omitempty"`
+	AddressLine1             string             `json:"addressLine1,omitempty"`
+	AddressLine2             string             `json:"addressLine2,omitempty"`
+	State                    string             `json:"state,omitempty"`
+	City                     string             `json:"city,omitempty"`
+	OriginCountry            string             `json:"originCountry,omitempty"`
+	OriginCountryCode        string             `json:"originCountryCode,omitempty"`
+	Country                  string             `json:"country,omitempty"`
+	ZipCode                  string             `json:"zipCode,omitempty"`
+	IATA                     string             `json:"iata,omitempty"`
+	ARC                      string             `json:"arc,omitempty"`
+	Status                   string             `json:"status,omitempty" default:"Active"`
+	PaymentStatus            string             `json:"paymentStatus,omitempty" default:"Inactive"`
+	IsSubscribed             bool               `json:"isSubscribed,omitempty"`
+	TermsAcceptedAt          *time.Time         `json:"xeniTermsAndConditionsAcceptedAt,omitempty"`
+	BookingOptions           BookingOptions     `json:"bookingMenuItemOptions,omitempty"`
+	APIAccess                APIAccess          `json:"apiAccess,omitempty"`
+	Analytics                Analytics          `json:"analytics,omitempty"`
+	CurrentPaymentGateway    string             `json:"currentPaymentGateway,omitempty"`
+	ManageLocation           bool               `json:"manageLocation,omitempty"`
+	DefaultDealsLocation     LocationSettings   `json:"defaultDealsLocation,omitempty"`
+	DefaultTargetLocation    LocationSettings   `json:"defaultTargetLocation,omitempty"`
+	MetaData                 MetaData           `json:"metaData,omitempty"`
+	OTPEnabled               bool               `json:"otpSignupEnable,omitempty"`
+	HideHeaderForProposal    bool               `json:"hideHeaderforDealProposal,omitempty"`
+	ExtranetEnabled          bool               `json:"extranetEnabled,omitempty"`
 }
 
 // Nested Structures
