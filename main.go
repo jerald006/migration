@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"mongo_cockroach/models"
 
@@ -67,7 +66,7 @@ func main() {
 	// }
 
 	// Function to migrate existing documents
-	migrateExistingDocuments := func(mongoCollection *mongo.Collection, tableName string, uniqueColumn string) {
+	migrateExistingDocuments := func(mongoCollection *mongo.Collection, tableName string) {
 		// cursor, err := mongoCollection.Find(context.Background(), bson.M{})
 		// if err != nil {
 		// 	log.Panic(err)
@@ -83,12 +82,33 @@ func main() {
 		}
 		defer cursor.Close(ctx)
 
-		for cursor.Next(context.Background()) {
+		// for cursor.Next(context.Background()) {
+		for cursor.Next(ctx) {
 			var document models.MongoAgency
 			if err := cursor.Decode(&document); err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(document)
+
+			// prepare the insert statement for CockroachDB
+			insertQuery := `
+			INSERT INTO agencies (
+				id, owner_id, subdomain, agency_name, domain, ein_number, 
+				current_website, government_id, contact_phone_number, contact_email_id, 
+				created_at, updated_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			`
+
+			// Execute the insert statement
+			_, err = cockroachDB.Exec(insertQuery,
+				document.Id.Hex(), document.Owner.Hex(), document.Subdomain, document.AgencyName,
+				document.Domain, document.EINNumber, document.CurrentWebsite, document.GovernmentID,
+				document.ContactPhoneNumber, document.ContactEmailID, time.Now(), time.Now(),
+			)
+
+			if err != nil {
+				log.Printf("Error inserting document %v: %v\n", document.Id, err)
+			}
+			// fmt.Println(document)
 
 			// mongoAgencyDoc := bson.Unmarshal(document, &models.MongoAgency)
 			// Convert primitive.ObjectID to string before checking for duplicates
@@ -130,7 +150,7 @@ func main() {
 	}
 
 	// Migrate existing documents from company collection
-	migrateExistingDocuments(mongoCollectionAgencies, "agencies", "id")
+	migrateExistingDocuments(mongoCollectionAgencies, "agencies")
 
 	// Migrate agents collection
 	// go migrateDocument(mongoCollectionAgents, "agent", "email")
