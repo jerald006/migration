@@ -63,6 +63,8 @@ type MongoAgency struct {
 	OTPEnabled               bool               `json:"otpSignupEnable,omitempty"`
 	HideHeaderForProposal    bool               `json:"hideHeaderforDealProposal,omitempty"`
 	ExtranetEnabled          bool               `json:"extranetEnabled,omitempty"`
+	CreatedAt                primitive.DateTime `json:"createdAt,omitempty"`
+	UpdatedAt                primitive.DateTime `json:"updatedAt,omitempty"`
 }
 
 // Nested Structures
@@ -105,18 +107,22 @@ type MetaData struct {
 }
 
 type CockroachDBAgency struct {
-	ID                 string     `json:"id" db:"id"`
-	OwnerID            *string    `json:"owner_id" db:"owner_id"`
-	Subdomain          string     `json:"subdomain" db:"subdomain"`
-	AgencyName         string     `json:"agency_name" db:"agency_name"`
-	Domain             *string    `json:"domain" db:"domain"`
-	EINNumber          *string    `json:"EIN_number" db:"EIN_number"`
-	CurrentWebsite     *string    `json:"current_website" db:"current_website"`
-	GovernmentID       *string    `json:"government_id" db:"government_id"`
-	ContactPhoneNumber *string    `json:"contact_phone_number" db:"contact_phone_number"`
-	ContactEmailID     string     `json:"contact_email_id" db:"contact_email_id"`
-	CreatedAt          *time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt          *time.Time `json:"updated_at" db:"updated_at"`
+	ID                 string    `json:"id" db:"id"`
+	OwnerID            string    `json:"owner_id" db:"owner_id"`
+	Subdomain          string    `json:"subdomain" db:"subdomain,omitempty"`
+	AgencyName         string    `json:"agency_name" db:"agency_name"`
+	Domain             string    `json:"domain" db:"domain,omitempty"`
+	EINNumber          string    `db:"EIN_number,omitempty"`
+	CurrentWebsite     string    `json:"current_website" db:"current_website,omitempty"`
+	GovernmentID       string    `json:"government_id" db:"government_id,omitempty"`
+	ContactPhoneNumber string    `json:"contact_phone_number" db:"contact_phone_number,omitempty"`
+	ContactEmailID     string    `json:"contact_email_id" db:"contact_email_id"`
+	CreatedAt          time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`
+}
+
+func (CockroachDBAgency) TableName() string {
+	return "agencies"
 }
 
 type CockroachDBAgencyPolicy struct {
@@ -182,3 +188,33 @@ type CockroachDBAgencyPolicy struct {
 	ReturnURL                       *string    `json:"return_url" db:"return_url"`
 	DefaultTargetLocation           *string    `json:"default_target_location" db:"default_target_location"`
 }
+
+func (mongoAgency MongoAgency) ConvertMongoToCockroach() CockroachDBAgency {
+	return CockroachDBAgency{
+		ID:                 mongoAgency.Id.Hex(),    // Convert ObjectID to string
+		OwnerID:            mongoAgency.Owner.Hex(), // Use pointer to string
+		Subdomain:          mongoAgency.Subdomain,
+		AgencyName:         mongoAgency.AgencyName,
+		Domain:             mongoAgency.Domain,
+		EINNumber:          mongoAgency.EINNumber,
+		CurrentWebsite:     mongoAgency.CurrentWebsite,
+		GovernmentID:       mongoAgency.GovernmentID,
+		ContactEmailID:     mongoAgency.ContactEmailID,
+		ContactPhoneNumber: mongoAgency.ContactPhoneNumber,
+		CreatedAt:          mongoAgency.CreatedAt.Time(),
+		UpdatedAt:          mongoAgency.UpdatedAt.Time(),
+	}
+}
+
+// ID                 string    `json:"id" db:"id"`
+// OwnerID            string    `json:"owner_id" db:"owner_id"`
+// Subdomain          string    `json:"subdomain" db:"subdomain"`
+// AgencyName         string    `json:"agency_name" db:"agency_name"`
+// Domain             string    `json:"domain" db:"domain"`
+// EINNumber          string    `json:"EIN_number" db:"EIN_number"`
+// CurrentWebsite     string    `json:"current_website" db:"current_website"`
+// GovernmentID       string    `json:"government_id" db:"government_id"`
+// ContactPhoneNumber string    `json:"contact_phone_number" db:"contact_phone_number"`
+// ContactEmailID     string    `json:"contact_email_id" db:"contact_email_id"`
+// CreatedAt          time.Time `json:"created_at" db:"created_at"`
+// UpdatedAt          time.Time `json:"updated_at" db:"updated_at"`

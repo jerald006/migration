@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"mongo_cockroach/models"
 
@@ -12,6 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -65,6 +68,15 @@ func main() {
 	// 	}
 	// }
 
+	dsn := "host=xeni-crdb-falcon-dev-5328.j77.aws-us-west-2.cockroachlabs.cloud port=26257 user=xeni-falcon-dev-db-user password=jXFjF2LuU2nAW-PgkNALbg dbname=xeni-dev sslmode=require"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect to the database: %v", err)
+	}
+
+	// Migrate the schema (optional, but recommended)
+	// db.AutoMigrate(&models.CockroachDBAgency{})
+
 	// Function to migrate existing documents
 	migrateExistingDocuments := func(mongoCollection *mongo.Collection, tableName string) {
 		// cursor, err := mongoCollection.Find(context.Background(), bson.M{})
@@ -89,25 +101,34 @@ func main() {
 				log.Fatal(err)
 			}
 
+			cockraochAgency := document.ConvertMongoToCockroach()
+
+			fmt.Println(cockraochAgency)
 			// prepare the insert statement for CockroachDB
-			insertQuery := `
-			INSERT INTO agencies (
-				id, owner_id, subdomain, agency_name, domain, ein_number, 
-				current_website, government_id, contact_phone_number, contact_email_id, 
-				created_at, updated_at
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-			`
 
-			// Execute the insert statement
-			_, err = cockroachDB.Exec(insertQuery,
-				document.Id.Hex(), document.Owner.Hex(), document.Subdomain, document.AgencyName,
-				document.Domain, document.EINNumber, document.CurrentWebsite, document.GovernmentID,
-				document.ContactPhoneNumber, document.ContactEmailID, time.Now(), time.Now(),
-			)
-
-			if err != nil {
-				log.Printf("Error inserting document %v: %v\n", document.Id, err)
+			result := db.Create(cockraochAgency)
+			if result.Error != nil {
+				log.Fatalf("failed to insert agency: %v", result.Error)
 			}
+
+			// insertQuery := `
+			// INSERT INTO agencies (
+			// 	id, owner_id, subdomain, agency_name, domain, ein_number,
+			// 	current_website, government_id, contact_phone_number, contact_email_id,
+			// 	created_at, updated_at
+			// ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			// `
+
+			// // Execute the insert statement
+			// _, err = cockroachDB.Exec(insertQuery,
+			// 	document.Id.Hex(), document.Owner.Hex(), document.Subdomain, document.AgencyName,
+			// 	document.Domain, document.EINNumber, document.CurrentWebsite, document.GovernmentID,
+			// 	document.ContactPhoneNumber, document.ContactEmailID, time.Now(), time.Now(),
+			// )
+
+			// if err != nil {
+			// 	log.Printf("Error inserting document %v: %v\n", document.Id, err)
+			// }
 			// fmt.Println(document)
 
 			// mongoAgencyDoc := bson.Unmarshal(document, &models.MongoAgency)

@@ -1,7 +1,7 @@
 package models
 
 type MongoUser struct {
-	_id                       string   `json:"_id"`
+	Id                        string   `json:"_id"`
 	FirstName                 string   `json:"first_name"`
 	LastName                  string   `json:"last_name"`
 	Email                     string   `json:"email"`
