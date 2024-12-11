@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
+	"mongo_cockroach/models"
+
 	"time"
 
 	_ "github.com/lib/pq"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -68,62 +68,64 @@ func main() {
 
 	// Function to migrate existing documents
 	migrateExistingDocuments := func(mongoCollection *mongo.Collection, tableName string, uniqueColumn string) {
-		cursor, err := mongoCollection.Find(context.Background(), bson.M{})
-		if err != nil {
-			log.Panic(err)
-		}
-		defer cursor.Close(context.Background())
-
-		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Set timeout duration here
-		// defer cancel()
-
-		// cursor, err := mongoCollection.Find(ctx, bson.M{})
+		// cursor, err := mongoCollection.Find(context.Background(), bson.M{})
 		// if err != nil {
-		// 	log.Fatal(err)
+		// 	log.Panic(err)
 		// }
-		// defer cursor.Close(ctx)
+		// defer cursor.Close(context.Background())
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Set timeout duration here
+		defer cancel()
+
+		cursor, err := mongoCollection.Find(ctx, bson.M{})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer cursor.Close(ctx)
 
 		for cursor.Next(context.Background()) {
-			var document bson.M
+			var document models.MongoAgency
 			if err := cursor.Decode(&document); err != nil {
 				log.Fatal(err)
 			}
+			fmt.Println(document)
 
+			// mongoAgencyDoc := bson.Unmarshal(document, &models.MongoAgency)
 			// Convert primitive.ObjectID to string before checking for duplicates
-			if oid, ok := document[uniqueColumn].(primitive.ObjectID); ok {
-				document[uniqueColumn] = oid.Hex()
-			}
+			// if oid, ok := document[uniqueColumn].(primitive.ObjectID); ok {
+			// 	document[uniqueColumn] = oid.Hex()
+			// }
 
 			// Check for duplicate entry
-			var count int
-			err := cockroachDB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = $1", tableName, uniqueColumn), document[uniqueColumn]).Scan(&count)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if count > 0 {
-				log.Printf("Duplicate %s found, skipping document: %v\n", uniqueColumn, document[uniqueColumn])
-				continue
-			}
+			// var count int
+			// err := cockroachDB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s = $1", tableName, uniqueColumn), document[uniqueColumn]).Scan(&count)
+			// if err != nil {
+			// 	log.Fatal(err)
+			// }
+			// if count > 0 {
+			// 	log.Printf("Duplicate %s found, skipping document: %v\n", uniqueColumn, document[uniqueColumn])
+			// 	continue
+			// }
 
-			columns := make([]string, 0, len(document))
-			values := make([]interface{}, 0, len(document))
-			placeholders := make([]string, 0, len(document))
-			i := 1
-			for key, value := range document {
-				columns = append(columns, fmt.Sprintf("\"%s\"", key))
-				// Convert primitive.ObjectID to string
-				if oid, ok := value.(primitive.ObjectID); ok {
-					value = oid.Hex()
-				}
-				values = append(values, value)
-				placeholders = append(placeholders, fmt.Sprintf("$%d", i))
-				i++
-			}
-			insertQuery := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, strings.Join(columns, ", "), strings.Join(placeholders, ", "))
-			_, err = cockroachDB.Exec(insertQuery, values...)
-			if err != nil {
-				log.Printf("Error inserting document %v: %v\n", document["_id"], err)
-			}
+			// columns := make([]string, 0, len(document))
+			// values := make([]interface{}, 0, len(document))
+			// placeholders := make([]string, 0, len(document))
+			// i := 1
+			// for key, value := range document {
+			// 	columns = append(columns, fmt.Sprintf("\"%s\"", key))
+			// 	// Convert primitive.ObjectID to string
+			// 	if oid, ok := value.(primitive.ObjectID); ok {
+			// 		value = oid.Hex()
+			// 	}
+			// 	values = append(values, value)
+			// 	placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+			// 	i++
+			// }
+			// insertQuery := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, strings.Join(columns, ", "), strings.Join(placeholders, ", "))
+			// _, err = cockroachDB.Exec(insertQuery, values...)
+			// if err != nil {
+			// 	log.Printf("Error inserting document %v: %v\n", document["_id"], err)
+			// }
 		}
 	}
 
