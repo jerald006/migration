@@ -18,7 +18,7 @@ import (
 func main() {
 	// MongoDB connection
 	// mongoClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin-dev:wUYvZfvoWHFIB2s0@xeniapp-cluster-dev.vswr9.mongodb.net/xeni-db-dev?retryWrites=true&w=majority&appName=xeniapp-cluster-dev"))
-	mongoClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://admin-dev:GdoFXNwcrWpctrmX@xeniapp-cluster-dev.vswr9.mongodb.net/xeni-db-dev?retryWrites=true&w=majority&appName=xeniapp-cluster-dev"))
+	mongoClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb+srv://app-user-dev:wUYvZfvoWHFIB2s0@xeniapp-cluster-dev.vswr9.mongodb.net/xeni-db-dev?retryWrites=true&w=majority&appName=xeniapp-cluster-dev"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func main() {
 
 	// CockroachDB connection
 	// connStr := "postgresql://root@localhost:26257/agent_details?sslmode=disable"
-	connStr := "jdbc:postgresql://xeni-falcon-dev-db-user:jXFjF2LuU2nAW-PgkNALbg@xeni-crdb-falcon-dev-5328.j77.aws-us-west-2.cockroachlabs.cloud:26257/system"
+	connStr := "jdbc:postgresql://xeni-falcon-dev-db-user:jXFjF2LuU2nAW-PgkNALbg@xeni-crdb-falcon-dev-5328.j77.aws-us-west-2.cockroachlabs.cloud:26257/xeni-dev"
 	cockroachDB, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)

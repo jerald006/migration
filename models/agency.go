@@ -7,7 +7,7 @@ import (
 )
 
 type MongoAgency struct {
-	Id                       primitive.ObjectID `json:"_id"`
+	Id                       primitive.ObjectID `bson:"_id"`
 	Owner                    primitive.ObjectID `json:"owner,omitempty"`
 	Subdomain                string             `json:"subdomain" validate:"required,subdomain"`
 	AgencyName               string             `json:"agencyName" validate:"required"`
