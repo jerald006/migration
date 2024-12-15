@@ -31,6 +31,7 @@ func main() {
 	defer mongoClient.Disconnect(ctx)
 
 	mongoCollectionAgencies := mongoClient.Database("xeni-db-dev").Collection("agencies")
+	mongoCollectionUsers := mongoClient.Database("xeni-db-dev").Collection("users")
 	// mongoCollectionCompany := mongoClient.Database("agent_details").Collection("company")
 
 	// CockroachDB connection
@@ -145,11 +146,61 @@ func main() {
 		}
 	}
 
+	// Function to migrate existing documents for users
+	migrateExistingUsers := func(mongoCollection *mongo.Collection, tableName string) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		cursor, err := mongoCollection.Find(ctx, bson.M{})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer cursor.Close(ctx)
+
+		for cursor.Next(ctx) {
+			var document models.MongoUser
+			if err := cursor.Decode(&document); err != nil {
+				log.Printf("Error decoding document: %v", err)
+				continue
+			}
+
+			// Check if user exists using a direct count query
+			var count int64
+			if err := db.Model(&models.CockroachDBUser{}).
+				Where("id = ?", document.Id).
+				Count(&count).Error; err != nil {
+				log.Printf("Error checking existence for ID %s: %v", document.Id, err)
+				continue
+			}
+
+			if count > 0 {
+				log.Printf("Skipping existing user with ID: %s", document.Id)
+				continue
+			}
+
+			// Convert and insert the document
+			cockroachUser := document.ConvertMongoToCockroachUser()
+			if err := db.Create(&cockroachUser).Error; err != nil {
+				log.Printf("Failed to insert user %s: %v", document.Id, err)
+			}
+
+			log.Printf("Successfully migrated user: %s", document.Id)
+		}
+
+		if err := cursor.Err(); err != nil {
+			log.Printf("Cursor error: %v", err)
+		}
+	}
+
 	// Migrate existing documents from company collection
 
 	migrateExistingDocuments(mongoCollectionAgencies, "agencies")
 
 	migrateExistingPolicies(mongoCollectionAgencies, "agency_policies")
+
+	// Migrate existing documents from user collection
+
+	migrateExistingUsers(mongoCollectionUsers, "users")
 
 	select {}
 }
