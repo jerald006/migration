@@ -31,7 +31,7 @@ func main() {
 	defer mongoClient.Disconnect(ctx)
 
 	mongoCollectionAgencies := mongoClient.Database("xeni-db-dev").Collection("agencies")
-	mongoCollectionUsers := mongoClient.Database("xeni-db-dev").Collection("users")
+	// mongoCollectionUsers := mongoClient.Database("xeni-db-dev").Collection("users")
 	// mongoCollectionCompany := mongoClient.Database("agent_details").Collection("company")
 
 	// CockroachDB connection
@@ -39,7 +39,7 @@ func main() {
 	//connStr := "jdbc:postgresql://xeni-falcon-dev-db-user:jXFjF2LuU2nAW-PgkNALbg@xeni-crdb-falcon-dev-5328.j77.aws-us-west-2.cockroachlabs.cloud:26257/xeni-dev"
 	// cockroachDB, err := sql.Open("postgres", connStr)
 	// if err != nil {
-	// 	log.Fatal(err)
+	//  log.Fatal(err)
 	// }
 
 	dsn := "host=xeni-crdb-falcon-dev-5328.j77.aws-us-west-2.cockroachlabs.cloud port=26257 user=xeni-falcon-dev-db-user password=jXFjF2LuU2nAW-PgkNALbg dbname=xeni-dev sslmode=require"
@@ -52,7 +52,7 @@ func main() {
 	// db.AutoMigrate(&models.CockroachDBAgency{})
 
 	//Function to migrate existing documents
-	migrateExistingDocuments := func(mongoCollection *mongo.Collection, tableName string) {
+	migrateExistingDocuments := func(mongoCollection *mongo.Collection) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -66,79 +66,53 @@ func main() {
 			var document models.MongoAgency
 			if err := cursor.Decode(&document); err != nil {
 				log.Printf("Error decoding document: %v", err)
-				//log.Panic(err)
-				//continue
-			}
-
-			// Check if document exists using a direct count query
-			var count int64
-			if err := db.Model(&models.CockroachDBAgency{}).
-				Where("id = ?", document.Id.Hex()).
-				Count(&count).Error; err != nil {
-				log.Printf("Error checking existence for ID %s: %v", document.Id.Hex(), err)
 				continue
 			}
 
-			if count > 0 {
+			// Check if agency exists
+			var agencyCount int64
+			if err := db.Model(&models.CockroachDBAgency{}).
+				Where("id = ?", document.Id.Hex()).
+				Count(&agencyCount).Error; err != nil {
+				log.Printf("Error checking existence for agency ID %s: %v", document.Id.Hex(), err)
+				continue
+			}
+
+			if agencyCount > 0 {
 				log.Printf("Skipping existing agency with ID: %s", document.Id.Hex())
 				continue
 			}
 
-			// Convert and insert the document
+			// Convert and insert the agency document
 			cockroachAgency := document.ConvertMongoToCockroach()
 			if err := db.Create(&cockroachAgency).Error; err != nil {
 				log.Printf("Failed to insert agency %s: %v", document.Id.Hex(), err)
-				//log.Panic(err)
-				//continue
+				continue
 			}
 
 			log.Printf("Successfully migrated agency: %s", document.Id.Hex())
-		}
 
-		if err := cursor.Err(); err != nil {
-			log.Printf("Cursor error: %v", err)
-		}
-	}
-
-	// Function to migrate existing documents for policies
-	migrateExistingPolicies := func(mongoCollection *mongo.Collection, tableName string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		cursor, err := mongoCollection.Find(ctx, bson.M{})
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer cursor.Close(ctx)
-
-		for cursor.Next(ctx) {
-			var document models.MongoAgency
-			if err := cursor.Decode(&document); err != nil {
-				log.Printf("Error decoding document: %v", err)
-				continue
-			}
-
-			// check if the policy already exists in CockroachDB
-			var count int64
+			// Now handle the agency policies
+			var policyCount int64
 			if err := db.Model(&models.CockroachDBAgencyPolicy{}).
 				Where("agency_id = ?", document.Id.Hex()).
-				Count(&count).Error; err != nil {
-				log.Printf("Error checking existence for agency ID %s: %v", document.Id.Hex(), err)
+				Count(&policyCount).Error; err != nil {
+				log.Printf("Error checking existence for policy agency ID %s: %v", document.Id.Hex(), err)
 				continue
 			}
-			if count > 0 {
+
+			if policyCount > 0 {
 				log.Printf("Skipping existing policy for agency with ID: %s", document.Id.Hex())
 				continue
 			}
 
-			// Convert and insert the document as policy
+			// Convert and insert the policy document
 			cockroachPolicy := document.ConvertMongoToCockroachPolicy()
 			if err := db.Create(&cockroachPolicy).Error; err != nil {
 				log.Printf("Failed to insert policy for agency %s: %v", document.Id.Hex(), err)
-				//continue
+			} else {
+				log.Printf("Successfully migrated policy for agency: %s", document.Id.Hex())
 			}
-
-			log.Printf("Successfully migrated policy for agency: %s", document.Id.Hex())
 		}
 
 		if err := cursor.Err(); err != nil {
@@ -147,60 +121,58 @@ func main() {
 	}
 
 	// Function to migrate existing documents for users
-	migrateExistingUsers := func(mongoCollection *mongo.Collection, tableName string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	// migrateExistingUsers := func(mongoCollection *mongo.Collection, tableName string) {
+	//  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//  defer cancel()
 
-		cursor, err := mongoCollection.Find(ctx, bson.M{})
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer cursor.Close(ctx)
+	//  cursor, err := mongoCollection.Find(ctx, bson.M{})
+	//  if err != nil {
+	//      log.Fatal(err)
+	//  }
+	//  defer cursor.Close(ctx)
 
-		for cursor.Next(ctx) {
-			var document models.MongoUser
-			if err := cursor.Decode(&document); err != nil {
-				log.Printf("Error decoding document: %v", err)
-				continue
-			}
+	//  for cursor.Next(ctx) {
+	//      var document models.MongoUser
+	//      if err := cursor.Decode(&document); err != nil {
+	//          log.Printf("Error decoding document: %v", err)
+	//          continue
+	//      }
 
-			// Check if user exists using a direct count query
-			var count int64
-			if err := db.Model(&models.CockroachDBUser{}).
-				Where("id = ?", document.Id).
-				Count(&count).Error; err != nil {
-				log.Printf("Error checking existence for ID %s: %v", document.Id, err)
-				continue
-			}
+	//      // Check if user exists using a direct count query
+	//      var count int64
+	//      if err := db.Model(&models.CockroachDBUser{}).
+	//          Where("id = ?", document.Id).
+	//          Count(&count).Error; err != nil {
+	//          log.Printf("Error checking existence for ID %s: %v", document.Id, err)
+	//          continue
+	//      }
 
-			if count > 0 {
-				log.Printf("Skipping existing user with ID: %s", document.Id)
-				continue
-			}
+	//      if count > 0 {
+	//          log.Printf("Skipping existing user with ID: %s", document.Id)
+	//          continue
+	//      }
 
-			// Convert and insert the document
-			cockroachUser := document.ConvertMongoToCockroachUser()
-			if err := db.Create(&cockroachUser).Error; err != nil {
-				log.Printf("Failed to insert user %s: %v", document.Id, err)
-			}
+	//      // Convert and insert the document
+	//      cockroachUser := document.ConvertMongoToCockroachUser()
+	//      if err := db.Create(&cockroachUser).Error; err != nil {
+	//          log.Printf("Failed to insert user %s: %v", document.Id, err)
+	//      }
 
-			log.Printf("Successfully migrated user: %s", document.Id)
-		}
+	//      log.Printf("Successfully migrated user: %s", document.Id)
+	//  }
 
-		if err := cursor.Err(); err != nil {
-			log.Printf("Cursor error: %v", err)
-		}
-	}
+	//  if err := cursor.Err(); err != nil {
+	//      log.Printf("Cursor error: %v", err)
+	//  }
+	// }
 
 	// Migrate existing documents from company collection
 
-	migrateExistingDocuments(mongoCollectionAgencies, "agencies")
-
-	migrateExistingPolicies(mongoCollectionAgencies, "agency_policies")
+	migrateExistingDocuments(mongoCollectionAgencies)
 
 	// Migrate existing documents from user collection
 
-	migrateExistingUsers(mongoCollectionUsers, "users")
+	// migrateExistingUsers(mongoCollectionUsers, "users")
 
 	select {}
 }
